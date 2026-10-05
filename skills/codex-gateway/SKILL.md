@@ -6,12 +6,12 @@ description: >-
   queries, not mutations or subscriptions.
 metadata:
   author: codex-data
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Codex Machine Payment Protocol (MPP)
 
-Use this skill when the [Codex](https://www.codex.io) Supergraph returns a `402 Payment Required` response. The MPP challenge flow lets you pay per query without needing an API key. For higher volume, get an API key at [dashboard.codex.io/signup](https://dashboard.codex.io/signup) — see [docs.codex.io](https://docs.codex.io) for details.
+Use this skill when the [Codex](https://www.codex.io) Supergraph returns a `402 Payment Required` response. The MPP challenge flow lets you pay per query without needing an API key. For higher volume, get an API key at [dashboard.codex.io/signup](https://dashboard.codex.io/signup) (one-time $1 activation, no recurring cost on the entry plan) — see [docs.codex.io](https://docs.codex.io) for details.
 
 |                       |                                                                 |
 | --------------------- | --------------------------------------------------------------- |

@@ -10,7 +10,7 @@ MCP URL:
 https://docs.codex.io/mcp
 ```
 
-This MCP server supports documentation search and API guidance. It does not execute Codex API queries directly.
+This MCP server supports documentation search and API guidance. It does not execute Codex API queries directly. Without MCP, the docs index at `https://docs.codex.io/llms.txt` lists every page for an agent to fetch, and `https://docs.codex.io/llms-full.txt` is the full text.
 
 ## Cursor
 

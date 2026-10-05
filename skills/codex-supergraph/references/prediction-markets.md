@@ -259,20 +259,16 @@ query DetailedPredictionEventStats {
     statsDay1 {
       start
       end
-      statsCurrency {
-        volumeUsd
-        volumeCT
-        openLiquidityUsd
-        closeLiquidityUsd
-        openOpenInterestUsd
-        closeOpenInterestUsd
-      }
-      statsNonCurrency { trades uniqueTraders }
-      statsChange { volumeChange openLiquidityChange openOpenInterestChange tradesChange uniqueTradersChange }
-      scores { trending relevance }
+      core { volume { usd ct } trades }
+      buySell { buyVolume { usd ct } sellVolume { usd ct } }
+      uniqueTraders { uniqueTraders }
+      liquidity { liquidity { open { usd ct } close { usd ct } } }
+      openInterest { openInterest { open { usd ct } close { usd ct } } }
+      statsChange { volumeChange tradesChange uniqueTradersChange liquidityChange openInterestChange }
+      scores { trending relevance competitive }
     }
-    allTimeStats { volumeUsd volumeCT venueVolumeUsd venueVolumeCT }
-    lifecycle { ageSeconds expectedLifespanSeconds timeToResolutionSeconds isResolved }
+    allTimeStats { volume { usd ct } venueVolume { usd ct } }
+    lifecycle { ageSeconds expectedLifespanSeconds timeToResolutionSeconds isResolved winningOutcomeId }
   }
 }
 ```

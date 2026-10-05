@@ -96,7 +96,6 @@ Example variables — trending tokens:
     "liquidity": { "lte": 1000000000 },
     "marketCap": { "gte": 500000, "lte": 1000000000000 },
     "trendingIgnored": false,
-    "creatorAddress": null,
     "potentialScam": false
   },
   "statsType": "FILTERED",
@@ -106,7 +105,21 @@ Example variables — trending tokens:
 }
 ```
 
-Note: `trendingScore24` is a valid ranking attribute but is not a selectable field on the result type. Sort by it, but don't request it in the selection set.
+Note: `trendingScore24` is a valid ranking attribute but is not a selectable field on the result type. Sort by it, but don't request it in the selection set. `creatorAddress` in `TokenFilters` is deprecated; use `creatorAddresses: [...]`. Add `token { risk { verdict coverage } }` to the selection when the list is user-facing, and `totalLiquidityUsd` next to `liquidity` when you want the token's 15-deepest-pools liquidity (see gotchas: liquidity fields). Pass `useAggregatedStats: true` for aggregated stats across pools.
+
+Example variables — tokens in a category (slugs from `categories`):
+
+```json
+{
+  "filters": {
+    "network": [8453],
+    "categories": { "anyOf": ["memes"] },
+    "liquidity": { "gte": 50000 }
+  },
+  "rankings": [{ "attribute": "volume24", "direction": "DESC" }],
+  "limit": 25
+}
+```
 
 ## 4) Pair metadata (`pairMetadata`)
 
@@ -132,6 +145,10 @@ query PairMetadata($pairId: String!) {
     }
   }
 }
+```
+
+```json
+{ "pairId": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640:1" }
 ```
 
 ## 5) Pair bars (`getBars`)
@@ -162,6 +179,12 @@ query GetBars(
   }
 }
 ```
+
+```json
+{ "symbol": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640:1", "from": 1759000000, "to": 1759086400, "resolution": "60", "removeEmptyBars": true }
+```
+
+Notes: `symbol` is `pairAddress:networkId`. `resolution` is a string: `1S`, `5S`, `15S`, `30S`, `1`, `5`, `15`, `30`, `60`, `240`, `720`, `1D`, `7D`. Max 1500 datapoints per request. Bars take their prices from the pool's post-block price, not from individual trades.
 
 ## 6) Single-token realtime (`onPriceUpdated`)
 
@@ -233,6 +256,10 @@ query GetTokenBars(
 }
 ```
 
+```json
+{ "symbol": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2:1", "from": 1759000000, "to": 1759086400, "resolution": "60", "removeEmptyBars": true }
+```
+
 ## 9) List pairs for a token (`listPairsWithMetadataForToken`)
 
 ```graphql
@@ -252,6 +279,10 @@ query ListPairs($tokenAddress: String!, $networkId: Int!) {
 }
 ```
 
+```json
+{ "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", "networkId": 1 }
+```
+
 ## 10) Token events (`getTokenEvents`)
 
 ```graphql
@@ -269,12 +300,17 @@ query GetTokenEvents(
     items {
       timestamp
       eventType
+      eventDisplayType
       token0SwapValueUsd
       token1SwapValueUsd
       token0ValueBase
       token1ValueBase
       maker
       transactionHash
+      tradeSource { id displayName }
+      data {
+        ... on SwapEventData { priceUsd priceBaseToken amount0 amount1 }
+      }
     }
   }
 }
@@ -291,6 +327,8 @@ Example variables:
   "limit": 25
 }
 ```
+
+Notes: `address` can be a token (resolves to its top pool) or a pair. The per-trade execution price lives on `data { ... on SwapEventData { priceUsd } }`; there is no top-level `priceUsd`. `tradeSource` names the app the trade was placed through (Solana and EVM), null when there is no signal. `query.timestamp { from to }` bounds are compared at sub-second precision, so pad by 1 to 2 seconds and dedupe. `crossPools: true` (with `symbolType: TOKEN`) streams a token's events across all its pools, DEFINED plan only.
 
 ## 11) Maker events (`getTokenEventsForMaker`)
 
@@ -332,6 +370,8 @@ Example variables:
 }
 ```
 
+Notes: `tokenAddress` is applied per page of 200 events, so a very active wallet over a wide window can return 0 items plus a cursor; use a tight `timestamp { from to }` window or keep paging. Records key on the signer, so trades routed through a custodial wallet attribute to that wallet.
+
 ## 12) Holders (`holders`)
 
 ```graphql
@@ -349,6 +389,12 @@ query Holders($input: HoldersInput!) {
   }
 }
 ```
+
+```json
+{ "input": { "tokenId": "0x6982508145454ce325ddbe47a25d4ec3d2311933:1", "limit": 25, "filterContracts": true } }
+```
+
+Notes: Growth or Enterprise plan. `filterContracts: true` hides pools, lockers and other contract wallets from the list.
 
 ## 13) Top-10 holder concentration (`top10HoldersPercent`)
 
@@ -520,8 +566,8 @@ query DetailedWalletStats($input: DetailedWalletStatsInput!) {
       statsNonCurrency { swaps uniqueTokens wins losses avgHoldPeriodSec }
     }
     statsWeek1 { statsUsd { volumeUsd realizedProfitUsd } statsNonCurrency { swaps wins losses } }
-    statsDay30 { statsUsd { volumeUsd realizedProfitUsd } }
-    statsYear1 { statsUsd { volumeUsd realizedProfitUsd } }
+    statsDay30 { statsUsd { volumeUsd realizedProfitUsd realizedProfitUsdExNative } }
+    statsYear { statsUsd { volumeUsd realizedProfitUsd } }
     networkBreakdown {
       networkId
       nativeTokenBalance
@@ -543,7 +589,7 @@ Example variables:
 }
 ```
 
-Notes: input is `DetailedWalletStatsInput`; `walletAddress` required, `networkId` / `timestamp` / `includeNetworkBreakdown` optional. Stats are fixed windows (`statsDay1` / `statsWeek1` / `statsDay30` / `statsYear1`), not an arbitrary date range — for a date range use `walletChart` (template #15). The currency sub-object is `statsUsd`, not `statsCurrency`. `networkSpecificStats` is deprecated — use `networkBreakdown`. USD/volume/profit values are strings; `realizedProfitPercentage` and `avgHoldPeriodSec` are floats.
+Notes: input is `DetailedWalletStatsInput`; `walletAddress` required, `networkId` / `timestamp` / `includeNetworkBreakdown` optional. Stats are fixed windows (`statsDay1` / `statsWeek1` / `statsDay30` / `statsYear`), not an arbitrary date range; `statsYear1` is deprecated (its unique-tokens value is the 30-day figure), use `statsYear`. `realizedProfitUsdExNative` strips native-token exposure (1d / 1w / 30d windows) — for a date range use `walletChart` (template #15). The currency sub-object is `statsUsd`, not `statsCurrency`. `networkSpecificStats` is deprecated — use `networkBreakdown`. USD/volume/profit values are strings; `realizedProfitPercentage` and `avgHoldPeriodSec` are floats.
 
 ## 19) Live token events (`onTokenEventsCreated`)
 
@@ -620,8 +666,8 @@ subscription OnTokenBarsUpdated($tokenId: String!) {
     timestamp
     statsType
     aggregates {
-      r1  { t usd { o h l c v } token { o h l c v } }
-      r60 { t usd { o h l c v } token { o h l c v } }
+      r1  { t usd { o h l c volume } token { o h l c volume } }
+      r60 { t usd { o h l c volume } token { o h l c volume } }
       r1D { t usd { o h l c } }
     }
   }
@@ -634,7 +680,7 @@ Example variables:
 { "tokenId": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2:1" }
 ```
 
-Notes: `tokenId` is the `address:networkId` composite (optional in schema but effectively required unless on an enterprise BarFeed plan). Available resolutions: `r1S`, `r5S`, `r15S`, `r30S`, `r1`, `r5`, `r15`, `r30`, `r60`, `r240`, `r720`, `r1D`, `r7D`. Each is `{ t, usd, token }` where `usd` / `token` are `IndividualBarData` (`{ o, h, l, c, v }` — note `v`, not `volume`; OHLC are Floats, `v` is Int). Pair-level fields (`pairAddress`, `pairId`, `quoteToken`) on this type are deprecated — use `tokenAddress` / `tokenId`.
+Notes: `tokenId` is the `address:networkId` composite (optional in schema but effectively required unless on an enterprise BarFeed plan). Available resolutions: `r1S`, `r5S`, `r15S`, `r30S`, `r1`, `r5`, `r15`, `r30`, `r60`, `r240`, `r720`, `r1D`, `r7D`. Each is `{ t, usd, token }` where `usd` / `token` are `IndividualBarData` (`{ o, h, l, c, volume }`; OHLC are Floats, `volume` is a String; the old Int `v` is deprecated). Pair-level fields (`pairAddress`, `pairId`, `quoteToken`) on this type are deprecated — use `tokenAddress` / `tokenId`.
 
 ## 22) Launchpad token events (`onLaunchpadTokenEvent` / `onLaunchpadTokenEventBatch`)
 
@@ -761,4 +807,121 @@ mutation DeleteWebhooks($input: DeleteWebhooksInput!) {
 { "input": { "webhookIds": ["your-webhook-id"] } }
 ```
 
-Notes: `CreateWebhooksInput` is a wrapper — set the input field for the webhook family you want, each holding a `webhooks: [...]` array, so you can create many at once. Available families (input field → the `webhookType` it produces): `tokenPriceEventWebhooksInput` → `TOKEN_PRICE_EVENT` (token price), `marketCapWebhooksInput` → `MARKET_CAP_EVENT` (market cap / circulating cap), `tokenTransferEventWebhooksInput` → `TOKEN_TRANSFER_EVENT` (wallet transfers), `tokenPairEventWebhooksInput` → `TOKEN_PAIR_EVENT`, `predictionTradeWebhooksInput` → `PREDICTION_TRADE`, `predictionMarketMetricsEventWebhooksInput` → `PREDICTION_MARKET_METRICS_EVENT`. `priceWebhooksInput` is deprecated — use `tokenPriceEventWebhooksInput`. Condition scalars use comparison objects, not flats: equality fields take `{ eq: ... }` (`StringEqualsConditionInput` / `IntEqualsConditionInput`), thresholds take `ComparisonOperatorInput` (`{ gt, gte, lt, lte, eq }`) — and its values are **strings** (`"4000"`, not `4000`). `alertRecurrence` is `INDEFINITE` or `ONCE`. `securityToken` is hashed (SHA-256) into the message so your callback can verify authenticity. Optional `retrySettings`, `bucketKey` (for querying subgroups via `getWebhooks`), `publishingType` (`SINGLE` default, or `BATCH`), and `deduplicate`. `createWebhooks` returns `CreateWebhooksOutput` (one `[Webhook]` list per family); `deleteWebhooks` returns `{ deletedIds }`. List existing webhooks with the `getWebhooks` query.
+Notes: `CreateWebhooksInput` is a wrapper — set the input field for the webhook family you want, each holding a `webhooks: [...]` array, so you can create many at once. Available families (input field → the `webhookType` it produces): `tokenPriceEventWebhooksInput` → `TOKEN_PRICE_EVENT` (token price), `marketCapWebhooksInput` → `MARKET_CAP_EVENT` (market cap / circulating cap), `tokenTransferEventWebhooksInput` → `TOKEN_TRANSFER_EVENT` (wallet transfers), `tokenPairEventWebhooksInput` → `TOKEN_PAIR_EVENT`, `predictionTradeWebhooksInput` → `PREDICTION_TRADE`, `predictionMarketMetricsEventWebhooksInput` → `PREDICTION_MARKET_METRICS_EVENT`, `tokenLaunchEventWebhooksInput` → `TOKEN_LAUNCH_EVENT` (exactly one of `creatorAddress` or `launchpadName` in the condition, optional `tokenAddress` / `networkIds`). `MARKET_CAP_EVENT` evaluates the token's price, not a pair's (`pairAddress` deprecated). `TOKEN_TRANSFER_EVENT` has no amount or USD condition. `priceWebhooksInput` is deprecated — use `tokenPriceEventWebhooksInput`. Condition scalars use comparison objects, not flats: equality fields take `{ eq: ... }` (`StringEqualsConditionInput` / `IntEqualsConditionInput`), thresholds take `ComparisonOperatorInput` (`{ gt, gte, lt, lte, eq }`) — and its values are **strings** (`"4000"`, not `4000`). `alertRecurrence` is `INDEFINITE` or `ONCE`. `securityToken` is hashed (SHA-256) into the message so your callback can verify authenticity. Optional `retrySettings`, `bucketKey` (for querying subgroups via `getWebhooks`), `publishingType` (`SINGLE` default, or `BATCH`), and `deduplicate`. `createWebhooks` returns `CreateWebhooksOutput` (one `[Webhook]` list per family); `deleteWebhooks` returns `{ deletedIds }`. List existing webhooks with the `getWebhooks` query.
+
+## 25) Pair screener (`filterPairs`)
+
+```graphql
+query FilterPairs($filters: PairFilters, $rankings: [PairRanking], $limit: Int) {
+  filterPairs(filters: $filters, rankings: $rankings, limit: $limit) {
+    count
+    results {
+      pair { address networkId pooled { token0 token1 invalidReserves } }
+      exchange { name }
+      token0 { symbol }
+      token1 { symbol }
+      liquidityToken
+      liquidity
+      lockedLiquidityPercentage
+      poolFeeBps
+      dynamicFee
+      volumeUSD24
+      txnCount24
+      riskVerdict
+      riskScore
+    }
+  }
+}
+```
+
+```json
+{
+  "filters": { "network": [8453], "liquidity": { "gte": 100000 }, "lockedLiquidityPercentage": { "gte": 0.5 } },
+  "rankings": [{ "attribute": "volumeUSD24", "direction": "DESC" }],
+  "limit": 25
+}
+```
+
+Notes: `liquidity` is the `liquidityToken` side only. `pooled.invalidReserves: true` with zero amounts means a v4 pool that is not backfilled yet, not an empty pool. `poolFeeBps` is null for dynamic-fee pools (filter with `dynamicFee`). Risk fields describe the pair's `quoteToken`.
+
+## 26) Token categories (`categories`, `categoryTokens`)
+
+```graphql
+query Categories($type: CategoryType) {
+  categories(type: $type) { id slug name shortName type parentId memberCount }
+}
+```
+
+```json
+{ "type": "CANONICAL" }
+```
+
+```graphql
+query CategoryTokens($slug: String!, $filters: TokenFilters, $rankings: [TokenRanking], $limit: Int) {
+  categoryTokens(slug: $slug, filters: $filters, rankings: $rankings, limit: $limit) {
+    count
+    results { liquidity volume24 marketCap token { address networkId symbol } }
+  }
+}
+```
+
+```json
+{ "slug": "memes", "filters": { "liquidity": { "gte": 10000 } }, "rankings": [{ "attribute": "volume24", "direction": "DESC" }], "limit": 25 }
+```
+
+Notes: `CANONICAL` categories are objective groupings (defi, layer-1, stablecoins, memes, real-world-assets and their children); `NARRATIVE` is reserved for trend-driven groupings. Take slugs from `categories`; about 90 exist in October 2026. `categoryTokens` takes the same filters and rankings as `filterTokens`; `filterTokens` itself accepts `categories: { anyOf, allOf, noneOf, hasCategory }`. Parent slugs include their children (tokenized-stock is under real-world-assets). `iconUrl` / `bannerUrl` are deprecated and null.
+
+## 27) Live screener (`onFilterTokensUpdated`)
+
+```graphql
+subscription OnFilterTokensUpdated($filters: TokenFilters, $rankings: [TokenRanking], $limit: Int) {
+  onFilterTokensUpdated(filters: $filters, rankings: $rankings, limit: $limit, statsType: FILTERED) {
+    removedTokenIds
+    updates {
+      priceUSD
+      volume24
+      liquidity
+      token { address networkId symbol }
+    }
+  }
+}
+```
+
+```json
+{ "filters": { "network": [1399811149], "liquidity": { "gte": 50000 }, "trendingIgnored": false }, "rankings": [{ "attribute": "trendingScore24", "direction": "DESC" }], "limit": 50 }
+```
+
+Notes: same arguments as `filterTokens` plus `updatePeriod`. Each message carries `updates` (full rows for tokens that newly match or changed) and `removedTokenIds` (tokens that fell out), so a client keeps its list in sync without resubscribing.
+
+## 28) Live pair events (`onEventsCreated`)
+
+```graphql
+subscription OnEventsCreated($address: String, $networkId: Int) {
+  onEventsCreated(address: $address, networkId: $networkId) {
+    address
+    networkId
+    events {
+      timestamp
+      eventDisplayType
+      maker
+      token0SwapValueUsd
+      token1SwapValueUsd
+      transactionHash
+      data { ... on SwapEventData { priceUsd } }
+    }
+  }
+}
+```
+
+```json
+{ "address": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640", "networkId": 1 }
+```
+
+Notes: pair-scoped (`address` is the pool); `onTokenEventsCreated` (template #19) is the token-scoped twin that follows the top pool. Optional `commitmentLevel: [Preprocessed, Processed, Confirmed]` (Preprocessed is Solana only). This replaces the deprecated `onUnconfirmedEventsCreated`. Without `address` the stream is network-wide and needs the EventFeed entitlement on the key. One message per pool per block.
+
+## 29) More templates by topic
+
+- Token risk, contract simulator, liquidity locks: [token-risk.md](token-risk.md)
+- Wallet screener, top traders, balances, holders: [wallets-and-balances.md](wallets-and-balances.md)
+- Launchpad rankings and graduation screens: [launchpads.md](launchpads.md)
+- Prediction markets: [prediction-markets.md](prediction-markets.md)
