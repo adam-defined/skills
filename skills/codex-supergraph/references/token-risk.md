@@ -130,10 +130,10 @@ query TokenTaxes($contractAddress: String!, $networkId: Int!, $simulationId: Str
 ```
 
 ```json
-{ "contractAddress": "0x89d8cb38067b55f820f29a9e12d0ce18682a2bfc", "networkId": 8453 }
+{ "contractAddress": "0x89d8cb38067b55f820f29a9e12d0ce18682a2bfc", "networkId": 8453, "simulationId": "<simulationId from AnalyzeToken>" }
 ```
 
-Reading a result: `verdict` is the answer (`TRADEABLE`, `HONEYPOT`, or `INDETERMINATE` with a `verdictReason`); `status` only tracks the pipeline and `buySuccess` / `sellSuccess` are true on indeterminate rows too, so read `verdict` first. `buyTax` / `sellTax` are decimal-fraction strings (`"0.05"` is 5%, `"1"` is 100%; a honeypot usually shows `sellTax: "1"` with `sellSuccess: false`). Tax belongs to the pool in `liquidity.pairAddress`, so two runs on the same token can differ (a Uniswap V4 pool id is 32 bytes). A submission writes a `PENDING` row first and the finished row lands under the same `uuid` within seconds; read the row that has a `verdict`. Omit `simulationId` to read every stored analysis, newest first; an empty list means never analyzed. One submission per token and network every five minutes, otherwise `TOO_MANY_REQUESTS`.
+Reading a result: `verdict` is the answer (`TRADEABLE`, `HONEYPOT`, or `INDETERMINATE` with a `verdictReason`); `status` only tracks the pipeline and `buySuccess` / `sellSuccess` are true on indeterminate rows too, so read `verdict` first. `buyTax` / `sellTax` are decimal-fraction strings (`"0.05"` is 5%, `"1"` is 100%; a honeypot usually shows `sellTax: "1"` with `sellSuccess: false`). Tax belongs to the pool in `liquidity.pairAddress`, so two runs on the same token can differ (a Uniswap V4 pool id is 32 bytes). Pass the `simulationId` returned by the mutation: the submission writes a `PENDING` row first and the finished row lands under the same `uuid` within seconds, so poll until that row has a `verdict`. Without `simulationId` you get every stored analysis, newest first, and an older finished row can be mistaken for the new result; an empty list means never analyzed. One submission per token and network every five minutes, otherwise `TOO_MANY_REQUESTS`.
 
 ## Supporting signals (keep, but read `risk` first)
 

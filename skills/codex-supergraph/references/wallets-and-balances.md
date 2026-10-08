@@ -65,7 +65,7 @@ query Portfolio($input: BalancesInput!) {
 
 ## PnL definitions and known distortions
 
-- `tokenAcquisitionCostUsd` is the average-cost basis of `purchasedTokenBalance` (bought minus sold through tracked swaps). `realizedProfitUsd` is proceeds minus the average cost of the units sold. Bought USD minus sold USD equals realized plus acquisition cost. Transfers out (router fee skims) do not reduce `purchasedTokenBalance`.
+- `tokenAcquisitionCostUsd` is the average-cost basis of `purchasedTokenBalance` (bought minus sold through tracked swaps). `realizedProfitUsd` is proceeds minus the average cost of the units sold. Bought USD minus sold USD equals acquisition cost minus realized profit. Transfers out (router fee skims) do not reduce `purchasedTokenBalance`.
 - Records key on `maker`, the transaction signer. Buys routed through a custodial or router wallet attribute to that wallet, not the beneficiary.
 - Pools with a static fee above 25% are dropped from pricing, so trades through them carry no USD and PnL is overstated. On Uniswap V4 hook pools the swap event reports pre-fee amounts, so bought quantity and sold USD can be overstated by the hook's take (4 to 8% seen on Robinhood). On Robinhood a new per-transaction pipeline fixes this for positions opened after late September 2026; it is rolling out to other EVM networks, then Solana.
 - Low-liquidity launchpad tokens before mid-August 2026 may have no `filterTokenWallets` rows at all. `backfillWalletAggregates` does not repair that.
