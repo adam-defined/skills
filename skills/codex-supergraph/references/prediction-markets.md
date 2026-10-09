@@ -753,7 +753,7 @@ query TraderTrades {
 
 **Trader profile page** (run 1–3 in parallel on load):
 1. `detailedPredictionTraderStats` — profile header and summary stats
-2. `filterPredictionTraderMarkets(traderIds, hasOpenPosition: true)` — active positions
+2. `filterPredictionTraderMarkets(traderIds, filters: { hasOpenPosition: true })` — active positions
 3. `predictionTraderBars` — cumulative P&L chart
 4. `filterPredictionTraderMarkets(traderIds)` — all positions (on tab switch)
 5. `predictionTrades(traderId)` — trade history (on tab switch)

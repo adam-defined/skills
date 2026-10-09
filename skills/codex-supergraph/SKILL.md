@@ -10,13 +10,12 @@ description: >-
   TRIGGERS: token price, token chart, OHLCV, trending tokens, token screener,
   pair data, holders, top holders, wallet PnL, wallet trades, wallet balances,
   portfolio, top traders, smart money, launchpad, pump.fun, bonding curve,
-  graduation, new tokens, token risk, rug check, honeypot, is this token a scam,
+  graduation, new tokens, token risk, rug check, honeypot,
   buy tax, sell tax, liquidity locked, token categories, memecoins, AI tokens,
-  prediction markets, Polymarket, Kalshi, event odds, prediction event,
+  prediction markets, Polymarket, Kalshi, event odds,
   prediction traders, trader leaderboard, trader PnL, prediction charts,
   outcome probability, open interest, prediction categories, betting markets,
-  market resolution, prediction positions, prediction trades, migrating from
-  Birdeye, migrating from Mobula, migrating from CoinGecko
+  market resolution, prediction positions, prediction trades
 metadata:
   author: codex-data
   version: "1.1"

@@ -26,7 +26,7 @@ Verdicts (`RiskVerdict`):
 
 Coverage (`RiskAnalysisCoverage`): `ANALYZED` (contract simulation ran and was decisive), `INCONCLUSIVE` (ran, not decisive), `NOT_ANALYZED` (no contract analysis; verdict rests on holder, liquidity, trading and moderation signals only), `STALE` (an older analysis). Always show coverage next to the verdict: `NEUTRAL` + `NOT_ANALYZED` has had no honeypot or tax check.
 
-Reasons (`RiskReasonCode`, 37 values as of October 2026) are grouped by prefix: `PROOF_*` (honeypot simulation, non-transferable, 100% transfer fee, paused, default frozen, rug occurred), `AUTH_*` (mint, freeze, permanent delegate, transfer hook, pausable, owner not renounced, can transfer ownership), `TAX_*` (high buy/sell tax, unconfirmed honeypot, paused), `LIQ_*` (minimal, unknown, rug cliff, unlocked, draining), `HOLD_*` (top-10, dev, sniper, bundler, insider concentration), `FLOW_*` (one-way flow, wallet farm, wash dominated, bundled launch, mechanical trading), `REP_*` (serial rugger, risky creator, scammer funded, imitator symbol/name). New codes are added over time; handle unknown codes gracefully.
+Reasons (`RiskReasonCode`) are grouped by prefix: `PROOF_*` (honeypot simulation, non-transferable, 100% transfer fee, paused, default frozen, rug occurred), `AUTH_*` (mint, freeze, permanent delegate, transfer hook, pausable, owner not renounced, can transfer ownership), `TAX_*` (high buy/sell tax, unconfirmed honeypot, paused), `LIQ_*` (minimal, unknown, rug cliff, unlocked, draining), `HOLD_*` (top-10, dev, sniper, bundler, insider concentration), `FLOW_*` (one-way flow, wallet farm, wash dominated, bundled launch, mechanical trading), `REP_*` (serial rugger, risky creator, scammer funded, imitator symbol/name). New codes are added over time; handle unknown codes gracefully.
 
 ### Rules that matter
 
@@ -141,7 +141,7 @@ Reading a result: `verdict` is the answer (`TRADEABLE`, `HONEYPOT`, or `INDETERM
 - Authority: `mintable`, `freezable` on `token`; on Robinhood (4663) mint authority is not resolved and reads null.
 - Holder cohorts on `filterTokens`: `top10HoldersPercent`, `devHeldPercentage`, `sniperHeldPercentage`, `bundlerHeldPercentage`, `insiderHeldPercentage`, `suspiciousHeldPercentage` (deduplicated union of snipers, bundlers and insiders; one-check screen) and their `*Count` twins. They are null for non-launchpad tokens and 0 for a launchpad token with no labelled holders. `tokenWalletStats(input: { tokenAddress, networkId })` returns the addresses behind each cohort (capped at 200) plus `devAddress`.
 - Market cap sentinel: since September 2026 a market cap that overflowed or exceeded $5T reads 0 (older data could show 9223372036854775807). `circulatingMarketCap` can exceed `marketCap` when a third-party circulating supply is stale after burns; prefer `marketCap` then.
-- Creator: `token { creator { address category labels tokensCreatedCount tokensMigratedCount } }` (`category` `TOKEN_CREATOR`, `NOTORIOUS`, etc.).
+- Creator: `token { creator { address category identityLabels tokensCreatedCount tokensMigratedCount } }` (`category` `TOKEN_CREATOR`, `NOTORIOUS`, etc.).
 
 ## Liquidity locks: pick the endpoint by question
 

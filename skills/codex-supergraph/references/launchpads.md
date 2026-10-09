@@ -19,7 +19,7 @@ Use when the user asks about pump.fun or any launchpad, new token launches, bond
 ## Names and protocols
 
 - `launchpadProtocol` is the enum `LaunchpadTokenProtocol` (`Pump`, `PumpMayhem`, `FourMeme`, `RaydiumLaunchpad`, `BoopFun`, `MeteoraDBC`, `Virtuals`, `Clanker`, `ClankerV4`, `Baseapp`, `ZoraV4`, `Printr`, `NadFun`, `Doppler`, `Flaunch`, ...). `launchpadName` is a display string that attributes a token to a specific surface sharing a protocol (`"Pump.fun"`, `"Flap"`, `"Four.meme"`, `"pons"`, `"LaunchLab"`, `"MeteoraDBC"`, `"Virtuals"`, `"Bankr"`, `"BAGS"`, ...). Names are case-sensitive; take them from https://docs.codex.io/launchpads (the Launchpad Names table) rather than guessing.
-- Coverage as of October 2026: 60+ launchpads across Solana, Base, Robinhood, Arc, BNB, Ethereum, Monad, Arbitrum, Avalanche, Unichain, X Layer, Mantle, MegaETH and Polygon. New launchpads are added weekly; the changelog lists them.
+- Coverage spans launchpads on Solana, Base, Robinhood, Arc, BNB, Ethereum, Monad, Arbitrum, Avalanche, Unichain, X Layer, Mantle, MegaETH and Polygon. New launchpads are added regularly; `filterLaunchpads` lists the active ones and the changelog lists additions.
 - `UniswapCCA` labels tokens launched through Uniswap's shared launch contract, which carries no on-chain attribution to a specific launchpad. On Robinhood it is usually pools.trade, but anyone can use the same contract.
 - `launchpad: null` on a token that visibly came from a launchpad means the launchpad is not indexed or labelled on that network (for example some BAGS tokens on Robinhood); it is not a verdict on the token.
 

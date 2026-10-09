@@ -328,7 +328,7 @@ Example variables:
 }
 ```
 
-Notes: `address` can be a token (resolves to its top pool) or a pair. The per-trade execution price lives on `data { ... on SwapEventData { priceUsd } }`; there is no top-level `priceUsd`. `tradeSource` names the app the trade was placed through (Solana and EVM), null when there is no signal. `query.timestamp { from to }` bounds are compared at sub-second precision, so pad by 1 to 2 seconds and dedupe. `crossPools: true` (with `symbolType: TOKEN`) streams a token's events across all its pools, DEFINED plan only.
+Notes: `address` can be a token (resolves to its top pool) or a pair. The per-trade execution price lives on `data { ... on SwapEventData { priceUsd } }`; there is no top-level `priceUsd`. `tradeSource` names the app the trade was placed through (Solana and EVM), null when there is no signal. `query.timestamp { from to }` bounds are compared at sub-second precision, so pad by 1 to 2 seconds and dedupe.
 
 ## 11) Maker events (`getTokenEventsForMaker`)
 
@@ -869,7 +869,7 @@ query CategoryTokens($slug: String!, $filters: TokenFilters, $rankings: [TokenRa
 { "slug": "memes", "filters": { "liquidity": { "gte": 10000 } }, "rankings": [{ "attribute": "volume24", "direction": "DESC" }], "limit": 25 }
 ```
 
-Notes: `CANONICAL` categories are objective groupings (defi, layer-1, stablecoins, memes, real-world-assets and their children); `NARRATIVE` is reserved for trend-driven groupings. Take slugs from `categories`; about 90 exist in October 2026. `categoryTokens` takes the same filters and rankings as `filterTokens`; `filterTokens` itself accepts `categories: { anyOf, allOf, noneOf, hasCategory }`. Parent slugs include their children (tokenized-stock is under real-world-assets). `iconUrl` / `bannerUrl` are deprecated and null.
+Notes: `CANONICAL` categories are objective groupings (defi, layer-1, stablecoins, memes, real-world-assets and their children); `NARRATIVE` is reserved for trend-driven groupings. Take slugs from `categories` (the list grows; do not hard-code it). `categoryTokens` takes the same filters and rankings as `filterTokens`; `filterTokens` itself accepts `categories: { anyOf, allOf, noneOf, hasCategory }`. Parent slugs include their children (tokenized-stock is under real-world-assets). `iconUrl` / `bannerUrl` are deprecated and null.
 
 ## 27) Live screener (`onFilterTokensUpdated`)
 

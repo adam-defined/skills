@@ -38,7 +38,7 @@ Plans: the entry plan ("Almost free", one-time $1 activation) allows 10,000 requ
 | MegaETH | `4326` |
 | Tempo | `4217` |
 
-Run `getNetworks` once per session for the full list (120 networks in October 2026). Networks get retired (for example DFK, Degen Chain, Odyssey Chain and opBNB in September 2026), so never trust a cached list across sessions.
+Run `getNetworks` once per session for the full list. Networks get retired (for example DFK, Degen Chain, Odyssey Chain and opBNB in September 2026), so never trust a cached list across sessions.
 
 ## Session preflight
 
@@ -66,7 +66,7 @@ Use to validate `networkId` before price/event/chart requests. `getNetworkStatus
 | Pair screener | `filterPairs` | Query | Includes pool fee, lock and risk filters |
 | Pair bars (OHLCV) | `getBars` | Query | Max 1500 datapoints |
 | Token bars | `getTokenBars` | Query | Aggregate bars; max 1500 datapoints |
-| Token events | `getTokenEvents` | Query | Cursor-paginated; `crossPools: true` for all pools (DEFINED plan only) |
+| Token events | `getTokenEvents` | Query | Cursor-paginated |
 | Maker events | `getTokenEventsForMaker` | Query | Wallet scoped |
 | Token risk | `token { risk }`, risk filters | Query | See token-risk.md |
 | Contract simulator | `simulateTokenContract`, `getSimulateTokenContractResults` | Mutation / Query | Growth+, beta |

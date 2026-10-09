@@ -22,6 +22,8 @@ Pay per query through the Machine Payment Protocol (MPP) 402 flow when no API ke
 npx skills add Codex-Data/skills -g --yes
 ```
 
+`-g` installs the skills globally, for every project. Drop it for a project-local install; when both exist, the project-local copy wins.
+
 If the installer stops with `PromptScript does not support global skill installation`, target the agents you use instead of every detected one (skills CLI issue [vercel-labs/skills#1352](https://github.com/vercel-labs/skills/issues/1352)):
 
 ```bash

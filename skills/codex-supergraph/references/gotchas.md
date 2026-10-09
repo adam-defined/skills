@@ -62,14 +62,13 @@ When ranking by `trendingScore24`, set `statsType: "FILTERED"` or you'll get zer
 ## Liquidity fields: which number you get
 
 - Default mode (`useAggregatedStats` off): `TokenFilterResult.liquidity` is the token's **top pair** liquidity, measured on the side the price route exits through (usually the quote side). `totalLiquidityUsd` is the token's **total liquidity**: the combined liquidity of its 15 deepest pools, leaving out pools with no trade in the last 7 days, counting only the real money each pool can reach in one or two trades into the network's reference tokens. It is a floor of what could be withdrawn, not a TVL. Null until computed.
-- `useAggregatedStats: true`: `liquidity` returns the same value as `totalLiquidityUsd` on networks where the real-money total is enabled (verified October 2026 on Ethereum, Base, BNB and Solana). On other networks `liquidity` is the token's aggregated liquidity and the two fields differ; there `totalLiquidityUsd` can still overstate what the pools hold (seen on Robinhood Chain, Monad, X Layer and Polygon in October 2026). When the two disagree, trust the smaller one and cross-check with `listPairsWithMetadataForToken`.
+- `useAggregatedStats: true`: `liquidity` returns the same value as `totalLiquidityUsd` on networks where the real-money total is enabled. On other networks `liquidity` is the token's aggregated liquidity and the two fields differ, and `totalLiquidityUsd` can overstate what the pools hold. When the two disagree, trust the smaller one and cross-check with `listPairsWithMetadataForToken`.
 - Hub tokens that other tokens pair against (WETH, SOL, VIRTUAL, HYPE) read a `totalLiquidityUsd` below the sum of their pools. That is by design: a pool whose other side routes back through the hub itself does not count as backing.
 - Both are recomputed when the token trades, so a token with no trade since the definition changed keeps its previous value.
 - All token-level liquidity values are one-sided. Only `pairMetadata` gives both sides: `token0` / `token1` each expose `pooled` and `price`; side USD is `pooled × price`; pool TVL is the sum. Never double a one-sided value.
 - `getTokenPrices.liquidityUsd` is the token's reserve-derived liquidity across routable pools and can differ from `totalLiquidityUsd`.
 - Bonding-curve pairs (pump.fun, Flap, Four.meme, Meteora DBC, LaunchLab, Virtuals, ...) report the quote reserve the curve holds, not the value of unsold inventory. A curve under $100 of quote reports no liquidity. Expect small numbers before graduation.
 - Uniswap v4 pools that have not been backfilled return `pair { pooled { token0 token1 invalidReserves } }` with zeroes and `invalidReserves: true`. That means "not backfilled yet", not "empty"; such pairs also read liquidity 0 and may carry `MinimumLiquidity` in `potentialScamReasons` until backfilled.
-- Codex plans to make aggregated stats the default for `filterTokens`; when that happens the default `liquidity` changes meaning. Check the changelog if a liquidity figure jumps.
 
 ## Market cap
 
@@ -169,7 +168,7 @@ All OHLC fields (`o`, `h`, `l`, `c`) in prediction market bars are strings, not 
 
 ## `filterPredictionEvents` vs `filterPredictionMarkets`
 
-Events are containers grouping related markets. Use `filterPredictionEvents` for discovery, then `filterPredictionMarkets(eventIds)` for market-level pricing within an event. Exclude `market-maker` and `high-frequency-bot` via `excludeTraderLabels` on `filterPredictionTraderMarkets` for a human leaderboard. `POSITION_REDEEMED` replaced the deprecated `PAYOUT_REDEMPTION` trade type.
+Events are containers grouping related markets. Use `filterPredictionEvents` for discovery, then `filterPredictionMarkets(eventIds)` for market-level pricing within an event. Exclude `market-maker` and `high-frequency-bot` with `filters: { excludeTraderLabels: [...] }` on `filterPredictionTraderMarkets` for a human leaderboard (it is a filter field, not a top-level argument). `POSITION_REDEEMED` replaced the deprecated `PAYOUT_REDEMPTION` trade type.
 
 ## `competitiveScore24h` is markets-only
 
